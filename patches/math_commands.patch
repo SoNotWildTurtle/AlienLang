@@ -1,0 +1,57 @@
+diff --git a/grub-core/commands/math.c b/grub-core/commands/math.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/math.c
+@@
++#include <grub/dl.h>
++#include <grub/command.h>
++#include <grub/err.h>
++
++static grub_err_t
++grub_cmd_mul (grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: mul <a> <b>");
++  long a = grub_strtol (argv[0], 0, 0);
++  long b = grub_strtol (argv[1], 0, 0);
++  grub_printf ("%ld\n", a * b);
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_cmd_div (grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: div <a> <b>");
++  long a = grub_strtol (argv[0], 0, 0);
++  long b = grub_strtol (argv[1], 0, 0);
++  if (b == 0)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "division by zero");
++  grub_printf ("%ld\n", a / b);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd_mul;
++static grub_command_t cmd_div;
++
++GRUB_MOD_INIT(math)
++{
++  cmd_mul = grub_register_command ("mul", grub_cmd_mul, 0,
++                                    "Multiply two integers");
++  cmd_div = grub_register_command ("div", grub_cmd_div, 0,
++                                    "Divide two integers");
++}
++
++GRUB_MOD_FINI(math)
++{
++  grub_unregister_command (cmd_mul);
++  grub_unregister_command (cmd_div);
++}
++
++diff --git a/Makefile.core.def b/Makefile.core.def
+@@
+ module = {
+   name = math;
+-  common = grub-core/math.c;
++  common = grub-core/commands/math.c;
+ };

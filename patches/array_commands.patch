@@ -1,0 +1,57 @@
+--- a/grub-core/commands/array.c	2025-07-10 17:59:04.100597101 +0000
++++ b/grub-core/commands/array.c	2025-07-10 18:05:28.591551583 +0000
+@@ -0,0 +1,54 @@
++#include <grub/command.h>
++#include <grub/mm.h>
++#include <grub/err.h>
++#include <grub/types.h>
++#include <grub/misc.h>
++
++#define ARRAY_SIZE 128
++static char *storage[ARRAY_SIZE];
++
++static grub_err_t
++grub_cmd_array_set (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 3)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: array_set <index> <value>");
++
++  unsigned long idx = grub_strtoul (argv[1], 0, 0);
++  if (idx >= ARRAY_SIZE)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "index out of range");
++
++  grub_free (storage[idx]);
++  storage[idx] = grub_strdup (argv[2]);
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_cmd_array_get (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: array_get <index>");
++
++  unsigned long idx = grub_strtoul (argv[1], 0, 0);
++  if (idx >= ARRAY_SIZE || !storage[idx])
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "undefined");
++
++  grub_printf ("%s\n", storage[idx]);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t set_cmd, get_cmd;
++
++GRUB_MOD_INIT(array)
++{
++  set_cmd = grub_register_command ("array_set", grub_cmd_array_set, 0, "Set array index to value.");
++  get_cmd = grub_register_command ("array_get", grub_cmd_array_get, 0, "Get array index value.");
++}
++
++GRUB_MOD_FINI(array)
++{
++  grub_unregister_command (set_cmd);
++  grub_unregister_command (get_cmd);
++  for (int i = 0; i < ARRAY_SIZE; ++i)
++    grub_free (storage[i]);
++}
++

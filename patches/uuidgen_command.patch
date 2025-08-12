@@ -1,0 +1,45 @@
+diff --git a/grub-core/commands/uuidgen.c b/grub-core/commands/uuidgen.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/uuidgen.c
+@@
++#include <grub/command.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++
++static unsigned long uuid_state = 88172645463325252UL;
++
++static unsigned long
++lcg_next (void)
++{
++  uuid_state = 6364136223846793005ULL * uuid_state + 1;
++  return uuid_state;
++}
++
++static grub_err_t
++grub_cmd_uuidgen (grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  grub_uint8_t uuid[16];
++  for (int i = 0; i < 16; ++i)
++    uuid[i] = (grub_uint8_t)(lcg_next () >> 24);
++
++  grub_printf ("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
++               uuid[0], uuid[1], uuid[2], uuid[3],
++               uuid[4], uuid[5], uuid[6], uuid[7],
++               uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(uuidgen)
++{
++  cmd = grub_register_command ("uuidgen", grub_cmd_uuidgen, 0,
++                               "Generate and print a random UUID");
++}
++
++GRUB_MOD_FINI(uuidgen)
++{
++  grub_unregister_command (cmd);
++}
++

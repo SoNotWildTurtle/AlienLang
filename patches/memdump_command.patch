@@ -1,0 +1,43 @@
+diff --git a/grub-core/commands/memdump.c b/grub-core/commands/memdump.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/memdump.c
+@@
++#include <grub/command.h>
++#include <grub/misc.h>
++#include <grub/err.h>
++
++static grub_err_t
++grub_cmd_memdump(grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  if (argc != 3)
++    return grub_error(GRUB_ERR_BAD_ARGUMENT, "usage: memdump <addr> <len>");
++
++  grub_addr_t addr = grub_strtoul(argv[1], 0, 0);
++  grub_size_t len = grub_strtoul(argv[2], 0, 0);
++
++  grub_uint8_t *p = (grub_uint8_t *)addr;
++  for (grub_size_t i = 0; i < len; i++)
++  {
++    grub_printf("%02x ", p[i]);
++    if ((i & 15) == 15)
++      grub_printf("\n");
++  }
++  if (len & 15)
++    grub_printf("\n");
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(memdump)
++{
++  cmd = grub_register_command("memdump", grub_cmd_memdump, 0,
++                              "Dump memory bytes from an address");
++}
++
++GRUB_MOD_FINI(memdump)
++{
++  grub_unregister_command(cmd);
++}
++
