@@ -1,0 +1,32 @@
+diff --git a/grub-core/commands/msleep.c b/grub-core/commands/msleep.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/msleep.c
+@@
++#include <grub/dl.h>
++#include <grub/command.h>
++#include <grub/misc.h>
++#include <grub/err.h>
++
++static grub_err_t
++grub_cmd_msleep(grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  if (argc != 1)
++    return grub_error(GRUB_ERR_BAD_ARGUMENT, "expected <milliseconds>");
++  grub_uint64_t ms = grub_strtoull(argv[0], 0, 10);
++  grub_millisleep(ms);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(msleep)
++{
++  cmd = grub_register_command("msleep", grub_cmd_msleep,
++                              "msleep MS", "Sleep for MS milliseconds.");
++}
++
++GRUB_MOD_FINI(msleep)
++{
++  grub_unregister_command(cmd);
++}

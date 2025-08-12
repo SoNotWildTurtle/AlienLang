@@ -1,0 +1,50 @@
+diff --git a/grub-core/commands/rtc.c b/grub-core/commands/rtc.c
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/grub-core/commands/rtc.c
+@@
++#include <grub/command.h>
++#include <grub/cpu/io.h>
++#include <grub/types.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++
++static grub_uint8_t
++rtc_read (grub_uint8_t reg)
++{
++  grub_outb (reg, 0x70);
++  return grub_inb (0x71);
++}
++
++static grub_uint8_t
++bcd_to_bin (grub_uint8_t val)
++{
++  return ((val >> 4) * 10) + (val & 0x0F);
++}
++
++static grub_err_t
++grub_cmd_rtc_time (grub_command_t cmd __attribute__ ((unused)),
++                   int argc __attribute__ ((unused)),
++                   char **argv __attribute__ ((unused)))
++{
++  grub_uint8_t sec = bcd_to_bin (rtc_read (0x00));
++  grub_uint8_t min = bcd_to_bin (rtc_read (0x02));
++  grub_uint8_t hr  = bcd_to_bin (rtc_read (0x04));
++  grub_printf ("%02u:%02u:%02u\n", hr, min, sec);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(rtc)
++{
++  cmd = grub_register_command ("rtc_time", grub_cmd_rtc_time, 0,
++                               "Print current RTC time.");
++}
++
++GRUB_MOD_FINI(rtc)
++{
++  grub_unregister_command (cmd);
++}
++

@@ -1,0 +1,51 @@
+diff --git a/grub-core/commands/io.c b/grub-core/commands/io.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/io.c
+@@
++#include <grub/command.h>
++#include <grub/cpu/io.h>
++#include <grub/types.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++
++static grub_err_t
++grub_cmd_io_read (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: io_read <port>");
++
++  unsigned long port = grub_strtoul (argv[1], 0, 0);
++  grub_uint8_t val = grub_inb (port);
++  grub_printf ("%02x\n", val);
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_cmd_io_write (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 3)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: io_write <port> <value>");
++
++  unsigned long port = grub_strtoul (argv[1], 0, 0);
++  unsigned long val = grub_strtoul (argv[2], 0, 0);
++  grub_outb ((grub_uint8_t) val, port);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t read_cmd, write_cmd;
++
++GRUB_MOD_INIT(io)
++{
++  read_cmd = grub_register_command ("io_read", grub_cmd_io_read, 0,
++                                    "Read a byte from an I/O port.");
++  write_cmd = grub_register_command ("io_write", grub_cmd_io_write, 0,
++                                     "Write a byte to an I/O port.");
++}
++
++GRUB_MOD_FINI(io)
++{
++  grub_unregister_command (read_cmd);
++  grub_unregister_command (write_cmd);
++}
++

@@ -1,0 +1,43 @@
+diff --git a/grub-core/commands/http_fetch.c b/grub-core/commands/http_fetch.c
+new file mode 100644
+--- a/grub-core/commands/http_fetch.c	2025-07-10 17:59:04.100597101 +0000
++++ b/grub-core/commands/http_fetch.c	2025-07-10 18:07:24.247276070 +0000
+@@ -0,0 +1,37 @@
++#include <grub/command.h>
++#include <grub/file.h>
++#include <grub/misc.h>
++#include <grub/err.h>
++
++static grub_err_t
++grub_cmd_http_fetch (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: http_fetch <url>");
++
++  grub_file_t file = grub_file_open (argv[1], GRUB_FILE_TYPE_NONE);
++  if (!file)
++    return grub_errno;
++
++  char buf[128];
++  grub_ssize_t len;
++  while ((len = grub_file_read (file, buf, sizeof (buf))) > 0)
++    grub_putnstr (buf, len);
++
++  grub_file_close (file);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(http_fetch)
++{
++  cmd = grub_register_command ("http_fetch", grub_cmd_http_fetch, 0,
++                                "Fetch and display a URL over HTTP.");
++}
++
++GRUB_MOD_FINI(http_fetch)
++{
++  grub_unregister_command (cmd);
++}
++
+

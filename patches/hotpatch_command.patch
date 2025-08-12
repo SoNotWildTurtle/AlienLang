@@ -1,0 +1,58 @@
+diff --git a/grub-core/commands/hotpatch.c b/grub-core/commands/hotpatch.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/hotpatch.c
+@@
++#include <grub/command.h>
++#include <grub/err.h>
++#include <grub/file.h>
++#include <grub/misc.h>
++
++static grub_err_t
++grub_cmd_hotpatch (grub_command_t cmd __attribute__ ((unused)),
++                   int argc, char **argv)
++{
++  if (argc != 3)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT,
++                       "usage: hotpatch <file> <addr>");
++
++  grub_file_t f = grub_file_open (argv[1]);
++  if (!f)
++    return grub_errno;
++
++  grub_size_t len = grub_file_size (f);
++  char *buf = grub_malloc (len);
++  if (!buf)
++    {
++      grub_file_close (f);
++      return grub_error (GRUB_ERR_OUT_OF_MEMORY, "alloc fail");
++    }
++
++  if (grub_file_read (f, buf, len) != (grub_ssize_t) len)
++    {
++      grub_file_close (f);
++      grub_free (buf);
++      return grub_error (GRUB_ERR_READ_ERROR, "read fail");
++    }
++  grub_file_close (f);
++
++  char *dest = (char *) grub_strtoul (argv[2], 0, 0);
++  grub_memcpy (dest, buf, len);
++  grub_free (buf);
++
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(hotpatch)
++{
++  cmd = grub_register_command ("hotpatch", grub_cmd_hotpatch, 0,
++                               "hotpatch <file> <addr> -- copy file to memory");
++}
++
++GRUB_MOD_FINI(hotpatch)
++{
++  grub_unregister_command (cmd);
++}
++

@@ -1,0 +1,53 @@
+diff --git a/grub-core/commands/sha256_file.c b/grub-core/commands/sha256_file.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/sha256_file.c
+@@
++#include <grub/command.h>
++#include <grub/crypto.h>
++#include <grub/file.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++
++static grub_err_t
++grub_cmd_sha256_file (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: sha256_file <file>");
++
++  grub_file_t f = grub_file_open (argv[1]);
++  if (! f)
++    return grub_errno;
++
++  grub_crypto_hash_handle_t h = grub_crypto_hash_get (GRUB_CRYPTO_HASH_SHA256);
++  if (! h)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "sha256 not supported");
++
++  char buf[4096];
++  grub_ssize_t len;
++  while ((len = grub_file_read (f, buf, sizeof (buf))) > 0)
++    grub_crypto_hash_update (h, (grub_uint8_t *) buf, len);
++  grub_file_close (f);
++
++  grub_uint8_t digest[32];
++  grub_crypto_hash_final (h, digest);
++  for (int i = 0; i < 32; i++)
++    grub_printf ("%02x", digest[i]);
++  grub_printf ("\n");
++
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(sha256_file)
++{
++  cmd = grub_register_command ("sha256_file", grub_cmd_sha256_file, 0,
++                               "Compute SHA-256 hash of a file");
++}
++
++GRUB_MOD_FINI(sha256_file)
++{
++  grub_unregister_command (cmd);
++}
++
