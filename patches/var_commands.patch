@@ -1,0 +1,101 @@
+diff --git a/grub-core/commands/var.c b/grub-core/commands/var.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/var.c
+@@
++#include <grub/command.h>
++#include <grub/mm.h>
++#include <grub/misc.h>
++#include <grub/err.h>
++
++#define VAR_MAX 32
++
++struct kv {
++  char *key;
++  char *value;
++};
++
++static struct kv store[VAR_MAX];
++
++static grub_err_t
++grub_cmd_var_set (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 3)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: var_set <key> <value>");
++
++  for (int i = 0; i < VAR_MAX; ++i)
++    if (store[i].key && grub_strcmp (store[i].key, argv[1]) == 0)
++      {
++        grub_free (store[i].value);
++        store[i].value = grub_strdup (argv[2]);
++        return GRUB_ERR_NONE;
++      }
++
++  for (int i = 0; i < VAR_MAX; ++i)
++    if (!store[i].key)
++      {
++        store[i].key = grub_strdup (argv[1]);
++        store[i].value = grub_strdup (argv[2]);
++        return GRUB_ERR_NONE;
++      }
++
++  return grub_error (GRUB_ERR_OUT_OF_MEMORY, "var store full");
++}
++
++static grub_err_t
++grub_cmd_var_get (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: var_get <key>");
++
++  for (int i = 0; i < VAR_MAX; ++i)
++    if (store[i].key && grub_strcmp (store[i].key, argv[1]) == 0)
++      {
++        grub_printf ("%s\n", store[i].value);
++        return GRUB_ERR_NONE;
++      }
++
++  return grub_error (GRUB_ERR_FILE_NOT_FOUND, "not found");
++}
++
++static grub_err_t
++grub_cmd_var_del (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: var_del <key>");
++
++  for (int i = 0; i < VAR_MAX; ++i)
++    if (store[i].key && grub_strcmp (store[i].key, argv[1]) == 0)
++      {
++        grub_free (store[i].key);
++        grub_free (store[i].value);
++        store[i].key = 0;
++        store[i].value = 0;
++        return GRUB_ERR_NONE;
++      }
++
++  return grub_error (GRUB_ERR_FILE_NOT_FOUND, "not found");
++}
++
++static grub_command_t set_cmd, get_cmd, del_cmd;
++
++GRUB_MOD_INIT(var)
++{
++  set_cmd = grub_register_command ("var_set", grub_cmd_var_set, 0, "Set variable");
++  get_cmd = grub_register_command ("var_get", grub_cmd_var_get, 0, "Get variable");
++  del_cmd = grub_register_command ("var_del", grub_cmd_var_del, 0, "Delete variable");
++}
++
++GRUB_MOD_FINI(var)
++{
++  grub_unregister_command (set_cmd);
++  grub_unregister_command (get_cmd);
++  grub_unregister_command (del_cmd);
++  for (int i = 0; i < VAR_MAX; ++i)
++    {
++      grub_free (store[i].key);
++      grub_free (store[i].value);
++    }
++}
++
+
