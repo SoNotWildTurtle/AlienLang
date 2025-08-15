@@ -1,0 +1,13 @@
+grub2-*/
+grub2_2.*
+grub_build/
+hotpatch_build/
+
+os/kernel/*.o
+os/kernel/kernel.bin
+os/kernel/kernel.elf
+
+lang/alienc
+lang/*.o
+
+personal_notes.gz

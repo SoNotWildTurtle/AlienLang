@@ -1,0 +1,38 @@
+diff --git a/grub-core/commands/randport.c b/grub-core/commands/randport.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/randport.c
+@@
++#include <grub/command.h>
++#include <grub/err.h>
++
++static unsigned long state = 2463534242UL;
++
++static unsigned long
++lcg_rand (void)
++{
++  state = 1103515245UL * state + 12345UL;
++  return state;
++}
++
++static grub_err_t
++grub_cmd_randport (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  unsigned long port = 1024 + (lcg_rand () % (65535 - 1024));
++  grub_printf ("%lu\n", port);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(randport)
++{
++  cmd = grub_register_command ("randport", grub_cmd_randport, 0,
++                               "Print a random network port between 1024 and 65535.");
++}
++
++GRUB_MOD_FINI(randport)
++{
++  grub_unregister_command (cmd);
++}
++

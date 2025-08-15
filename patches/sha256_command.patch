@@ -1,0 +1,47 @@
+diff --git a/grub-core/commands/sha256.c b/grub-core/commands/sha256.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/sha256.c
+@@
++#include <grub/command.h>
++#include <grub/crypto.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++
++static grub_err_t
++grub_cmd_sha256 (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: sha256 <string>");
++
++  grub_crypto_hash_handle_t h = grub_crypto_hash_get (GRUB_CRYPTO_HASH_SHA256);
++  if (!h)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "sha256 not supported");
++
++  grub_crypto_hash_init (h);
++  grub_crypto_hash_update (h, (grub_uint8_t *) argv[1], grub_strlen (argv[1]));
++
++  grub_uint8_t digest[32];
++  grub_crypto_hash_final (h, digest);
++  grub_crypto_hash_close (h);
++
++  for (int i = 0; i < 32; i++)
++    grub_printf ("%02x", digest[i]);
++  grub_printf ("\n");
++
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(sha256)
++{
++  cmd = grub_register_command ("sha256", grub_cmd_sha256, 0,
++                               "Compute SHA-256 hash of a string.");
++}
++
++GRUB_MOD_FINI(sha256)
++{
++  grub_unregister_command (cmd);
++}
++

@@ -1,0 +1,34 @@
+diff --git a/grub-core/commands/beacon.c b/grub-core/commands/beacon.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/beacon.c
+@@
++#include <grub/command.h>
++#include <grub/file.h>
++#include <grub/misc.h>
++#include <grub/err.h>
++
++static grub_err_t
++grub_cmd_beacon (grub_command_t cmd __attribute__((unused)), int argc, char **argv)
++{
++  const char *url = (argc > 1) ? argv[1] : "http://localhost:8080/beacon";
++  grub_file_t f = grub_file_open (url, GRUB_FILE_TYPE_NONE);
++  if (f)
++    grub_file_close (f);
++
++  grub_printf ("Beacon sent to %s\n", url);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(beacon)
++{
++  cmd = grub_register_command ("beacon", grub_cmd_beacon, 0,
++                               "Send a beacon HTTP request to a URL (default localhost)." );
++}
++
++GRUB_MOD_FINI(beacon)
++{
++  grub_unregister_command (cmd);
++}

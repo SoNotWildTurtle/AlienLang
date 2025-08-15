@@ -1,0 +1,63 @@
+diff --git a/grub-core/commands/string_cmds.c b/grub-core/commands/string_cmds.c
+new file mode 100644
+--- /dev/null
++++ b/grub-core/commands/string_cmds.c
+@@
++#include <grub/command.h>
++#include <grub/err.h>
++#include <grub/misc.h>
++#include <grub/mm.h>
++#include <grub/printf.h>
++
++static grub_err_t
++grub_cmd_strlen (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 2)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: strlen <string>");
++
++  grub_printf ("%u\n", (unsigned) grub_strlen (argv[1]));
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_cmd_substr (grub_command_t cmd __attribute__ ((unused)), int argc, char **argv)
++{
++  if (argc != 4)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "usage: substr <str> <start> <len>");
++
++  const char *s = argv[1];
++  unsigned long start = grub_strtoul (argv[2], 0, 0);
++  unsigned long len = grub_strtoul (argv[3], 0, 0);
++  unsigned long slen = grub_strlen (s);
++
++  if (start > slen)
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "start out of range");
++  if (start + len > slen)
++    len = slen - start;
++
++  char *buf = grub_malloc (len + 1);
++  if (!buf)
++    return grub_error (GRUB_ERR_OUT_OF_MEMORY, "no mem");
++
++  grub_memcpy (buf, s + start, len);
++  buf[len] = '\0';
++  grub_printf ("%s\n", buf);
++  grub_free (buf);
++  return GRUB_ERR_NONE;
++}
++
++static grub_command_t cmd_strlen, cmd_substr;
++
++GRUB_MOD_INIT(string_cmds)
++{
++  cmd_strlen = grub_register_command ("strlen", grub_cmd_strlen, 0,
++                                      "Print length of a string");
++  cmd_substr = grub_register_command ("substr", grub_cmd_substr, 0,
++                                      "Extract substring");
++}
++
++GRUB_MOD_FINI(string_cmds)
++{
++  grub_unregister_command (cmd_strlen);
++  grub_unregister_command (cmd_substr);
++}
